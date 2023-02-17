@@ -2,6 +2,7 @@ val invoker: Configuration by configurations.creating
 
 plugins {
     kotlin("jvm") version "1.8.0"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
     application
 }
 
@@ -39,6 +40,20 @@ task<JavaExec>("runFunction") {
     doFirst {
         args("--classpath", files(configurations.runtimeClasspath, sourceSets["main"].output).asPath)
     }
+}
+
+tasks.register<Zip>("packageDistribution") {
+    archiveFileName.set("${rootProject.name}-${rootProject.version}.zip")
+    destinationDirectory.set(layout.buildDirectory.dir("dist"))
+
+    from(layout.buildDirectory.file("libs/${rootProject.name}-${rootProject.version}-all.jar"))
+}
+
+tasks.register("shadowJarAndPackageDistribution") {
+    dependsOn("shadowJar")
+    dependsOn("packageDistribution")
+
+    tasks.findByName("packageDistribution")?.mustRunAfter("shadowJar")
 }
 
 kotlin {
